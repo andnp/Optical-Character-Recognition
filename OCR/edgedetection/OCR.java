@@ -135,7 +135,7 @@ public class OCR implements Serializable {
 			String str = "";
 			double[][] cur = map;
 			try {
-				PrintWriter writer = new PrintWriter(name +".txt");
+				PrintWriter writer = new PrintWriter("../txtOutput/" + name +".txt");
 				for(int j = 0; j < PIC_SIZE; j++){
 					for(int i = 0; i < PIC_SIZE; i++){
 						int val = (int)Math.round(cur[j][i]);
@@ -159,7 +159,8 @@ public class OCR implements Serializable {
 	
 	public static void main(String[] args){
 		OCR me = new OCR();
-		Picture pic = new Picture("C://Users/Andy/workspace/ImageProcessing/src/edgedetection/toberead.jpg");
+		String tbrDir = new String("../edgedetection/toberead.jpg");
+		Picture pic = new Picture(tbrDir);
 		
 		TrainingLetters tl = null;
 		tl = deSerialize();
@@ -267,7 +268,7 @@ public class OCR implements Serializable {
 			for(int i = 0; i < tl.mapArray.length; i++){
 				char c = tl.getImageMap(i).getChar();
 				tl.getImageMap(i).iter = li.getIteration(c);
-				FileOutputStream fout = new FileOutputStream("C://Users/Andy/workspace/ImageProcessing/src/SerialFiles/"+ c +".ser");
+				FileOutputStream fout = new FileOutputStream("../SerialFiles/"+ c +".ser");
 				ObjectOutputStream oos = new ObjectOutputStream(fout);
 				oos.writeObject(tl.getImageMap(i));
 				oos.close();
@@ -277,7 +278,7 @@ public class OCR implements Serializable {
 		}
 	}
 	public static TrainingLetters deSerialize(){
-		File dir = new File("C://Users/Andy/workspace/ImageProcessing/src/SerialFiles/");
+		File dir = new File("../SerialFiles");
 		ImageMap[] imArray = new ImageMap[0];
 		for (File child : dir.listFiles()) {
 			String type = child.getName().substring((int)child.getName().length() - 4, (int)child.getName().length());
