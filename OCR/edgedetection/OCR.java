@@ -1,10 +1,13 @@
 package edgedetection;
 
 import java.io.*;
+/*
 
+*/
 public class OCR implements Serializable {
 	static OCR me = new OCR();
 	private static final long serialVersionUID = 1L;
+	// size of read image in pixels
 	private static final int PIC_SIZE = 200;
 	static LetterIterations li = me.new LetterIterations();
 	
@@ -12,6 +15,7 @@ public class OCR implements Serializable {
 		private static final long serialVersionUID = 1L;
 		int[] iterations = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 		
+		// returns the position in the iteration vector, given a letter.
 		public int getPosition(char c){
 			int ret = 0;
 			switch(c) {
@@ -45,14 +49,17 @@ public class OCR implements Serializable {
 			
 			return ret;
 		}
+		// returns the number of iterations have passed for given letter.
 		public int getIteration(char c){
 			int pos = this.getPosition(c);
 			return iterations[pos];
 		}
+		// increments the iteration number of a character.
 		public void incIteration(char c){
 			int pos = this.getPosition(c);
 			iterations[pos] += 1;
 		}
+		// sets the iteration number of a character with the given number.
 		public void setIteration(char c, int val){
 			int pos = this.getPosition(c);
 			iterations[pos] = val;
@@ -60,14 +67,15 @@ public class OCR implements Serializable {
 	}
 	private class TrainingLetters{
 		ImageMap[] mapArray = {};
-		
+		// no argument constructor
 		TrainingLetters(){
 			
 		}
+		// creates an ImageMap array with the given ImageMap array.
 		TrainingLetters(ImageMap[] imArray){
 			mapArray = imArray;
 		}
-		
+		// add an ImageMap to mapArray. Pushes if character is not present, averages grey-value pixels otherwise.
 		public void addImageMap(ImageMap im){
 			// check if an ImageMap already exists for a given letter
 			boolean exists = false;
@@ -86,6 +94,7 @@ public class OCR implements Serializable {
 			} else {
 				// average pixels
 				ImageMap working = getImageMap(index);
+				// iterate over every pixel in working image.
 				for(int j = 0; j < PIC_SIZE; j++){
 					for(int i = 0; i < PIC_SIZE; i++){
 						double n, m;
@@ -99,9 +108,11 @@ public class OCR implements Serializable {
 				//working.WriteMap(working.getChar() +""+ li.getIteration(working.getChar()));
 			}
 		}
+		// returns ImageMap at specified index
 		public ImageMap getImageMap(int index){
 			return mapArray[index];
 		}
+		// adds an ImageMap to the last element of mapArray.
 		public void Push(ImageMap im){
 			ImageMap[] newarray = new ImageMap[mapArray.length + 1];
 			for(int i = 0; i < mapArray.length; i++){
