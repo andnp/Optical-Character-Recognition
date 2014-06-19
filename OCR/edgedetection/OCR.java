@@ -229,16 +229,17 @@ public class OCR implements Serializable {
 			String type = child.getName().substring((int)child.getName().length() - 4, (int)child.getName().length());
 		  	String name = child.getName().substring(0, (int)child.getName().length() - 4);
 //		  	System.out.println(type);
-		  	int num = Integer.parseInt(child.getName().substring(1, (int)child.getName().length() - 4));
+		  	ImageMap im;
 		  	if(type.equals(".jpg")){
 		  		Picture temp = prepPicture(new Picture(child.getPath()));
-		  		if(name.charAt(0) != "_") {
-					ImageMap im = createImageMap(temp, name.charAt(0));
+		  		char underscore = '_';
+		  		if(name.charAt(0) != underscore) {
+					im = createImageMap(temp, name.charAt(0));
 				} else {
-					ImageMap im = createImageMap(temp, name.charAt(1));
+					im = createImageMap(temp, name.charAt(1));
 				}
 		  		tl.addImageMap(im);
-		  		System.out.println("File: " + name + num);
+		  		System.out.println("File: " + name);
 		  	}
 		}
 		return tl;
