@@ -13,7 +13,7 @@ public class OCR implements Serializable {
 	
 	private class LetterIterations implements Serializable{
 		private static final long serialVersionUID = 1L;
-		int[] iterations = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+		int[] iterations = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 		
 		// returns the position in the iteration vector, given a letter.
 		public int getPosition(char c){
@@ -45,6 +45,33 @@ public class OCR implements Serializable {
 			case 'x': ret = 23; break;
 			case 'y': ret = 24; break;
 			case 'z': ret = 25; break;
+			
+			case 'A': ret = 26; break;
+			case 'B': ret = 27; break;
+			case 'C': ret = 28; break;
+			case 'D': ret = 29; break;
+			case 'E': ret = 30; break;
+			case 'F': ret = 31; break;
+			case 'G': ret = 32; break;
+			case 'H': ret = 33; break;
+			case 'I': ret = 34; break;
+			case 'J': ret = 35; break;
+			case 'K': ret = 36; break;
+			case 'L': ret = 37; break;
+			case 'M': ret = 38; break;
+			case 'N': ret = 39; break;
+			case 'O': ret = 40; break;
+			case 'P': ret = 41; break;
+			case 'Q': ret = 42; break;
+			case 'R': ret = 43; break;
+			case 'S': ret = 44; break;
+			case 'T': ret = 45; break;
+			case 'U': ret = 46; break;
+			case 'V': ret = 47; break;
+			case 'W': ret = 48; break;
+			case 'X': ret = 49; break;
+			case 'Y': ret = 50; break;
+			case 'Z': ret = 51; break;
 			}
 			
 			return ret;
@@ -197,15 +224,19 @@ public class OCR implements Serializable {
 		return pic;
 	}
 	public static TrainingLetters getTrainingLetters(TrainingLetters tl){
-		File dir = new File("C://Users/Andy/workspace/ImageProcessing/src/TrainingPictures/");
+		File dir = new File("../TrainingPictures");
 		for (File child : dir.listFiles()) {
 			String type = child.getName().substring((int)child.getName().length() - 4, (int)child.getName().length());
-		  	String name = child.getName().substring(0, 1);
+		  	String name = child.getName().substring(0, (int)child.getName().length() - 4);
 //		  	System.out.println(type);
 		  	int num = Integer.parseInt(child.getName().substring(1, (int)child.getName().length() - 4));
 		  	if(type.equals(".jpg")){
 		  		Picture temp = prepPicture(new Picture(child.getPath()));
-		  		ImageMap im = createImageMap(temp, name.charAt(0));
+		  		if(name.charAt(0) != "_") {
+					ImageMap im = createImageMap(temp, name.charAt(0));
+				} else {
+					ImageMap im = createImageMap(temp, name.charAt(1));
+				}
 		  		tl.addImageMap(im);
 		  		System.out.println("File: " + name + num);
 		  	}
@@ -278,8 +309,15 @@ public class OCR implements Serializable {
 		try{
 			for(int i = 0; i < tl.mapArray.length; i++){
 				char c = tl.getImageMap(i).getChar();
+				String fileName = new String();
+				if(Character.isUpperCase(c)){
+					fileName = "../SerialFiles/_" + c + ".ser";
+				} else {
+					fileName = "../SerialFiles/" + c + ".ser";
+				}
+				
 				tl.getImageMap(i).iter = li.getIteration(c);
-				FileOutputStream fout = new FileOutputStream("../SerialFiles/"+ c +".ser");
+				FileOutputStream fout = new FileOutputStream(fileName);
 				ObjectOutputStream oos = new ObjectOutputStream(fout);
 				oos.writeObject(tl.getImageMap(i));
 				oos.close();
