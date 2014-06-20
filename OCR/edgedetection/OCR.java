@@ -11,8 +11,14 @@ public class OCR implements Serializable {
 	private static final int PIC_SIZE = 200;
 	static LetterIterations li = me.new LetterIterations();
 	
+	/* 
+	 * A LetterIterations object keeps track of how many training letters
+	 * have been processed thus far
+	*/
 	private class LetterIterations implements Serializable{
 		private static final long serialVersionUID = 1L;
+		// array keeping track of the number of training images.
+		// the index is based on the character.
 		int[] iterations = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 		
 		// returns the position in the iteration vector, given a letter.
@@ -92,6 +98,10 @@ public class OCR implements Serializable {
 			iterations[pos] = val;
 		}
 	}
+	/* 
+	 * A training letter contains an ImageMap array and
+	 * can add ImageMaps and average grey values
+	 */
 	private class TrainingLetters{
 		ImageMap[] mapArray = {};
 		// no argument constructor
@@ -149,6 +159,9 @@ public class OCR implements Serializable {
 			this.mapArray = newarray;
 		}
 	}
+	/* 
+	 * An ImageMap contains a PIC_SIZE x PIC_SIZE matrix containing grey values of an image
+	 */
 	private class ImageMap implements Serializable{
 		private static final long serialVersionUID = 1L;
 		double[][] map = new double[PIC_SIZE][PIC_SIZE];
@@ -157,18 +170,23 @@ public class OCR implements Serializable {
 		int iter;
 		// only get iter after deserialize
 		
+		// returns value of map at a given point
 		public double getPoint(Coords coords){
 			return map[coords.getY()][coords.getX()];
 		}
+		// returns the character that this ImageMap represents
 		public char getChar(){
 			return this.c;
 		}
+		// sets the character that this ImageMap represents
 		public void setChar(char c){
 			this.c = c;
 		}
+		// sets the value of a map at a point
 		public void setPoint(Coords coords, double val){
 			this.map[coords.getY()][coords.getX()] = val;
 		}
+		// prints the values of the map in a 2-dimensional matrix to a txt file of the given name
 		private void WriteMap(String name){
 			String str = "";
 			double[][] cur = map;
@@ -197,25 +215,34 @@ public class OCR implements Serializable {
 	
 	public static void main(String[] args){
 		OCR me = new OCR();
+		// This is the picture that is read in (for debugging only)
 		String tbrDir = new String("../edgedetection/toberead.jpg");
 		Picture pic = new Picture(tbrDir);
 		
+		// create TrainingLetters
 		TrainingLetters tl = null;
+		// pull TrainingLetters from .ser files (if they exist)
 		tl = deSerialize();
-		if(tl.mapArray.length <= 25){
-			System.out.println("hi");
+		// if .ser files do not exist or even one does not exist, recreate entire database
+		// need to fix so it only updates database, not recreate entire database
+		if(tl.mapArray.length <= 51){
 			tl = getTrainingLetters(me.new TrainingLetters());
 		}
 		
+		// trims, darkens, and turns to grey-scale the picture to be read
 		pic = prepPicture(pic);
+		// show picture to be read in a new window (debugging purposes only)
 		PicFrame f = new PicFrame(pic);
 		f.buildFrame();
+		// find the closest match to the picture to be read
 		ImageMap result = closestMatch(createImageMap(pic), tl);
+		// create new serial files 
 		serializeTLMaps(tl);
-		//deSerialize();
+		// print some info to console
 		System.out.println("Total trainers: " + li.getIteration('z'));
 		System.out.println("Guess:" +result.getChar());
 	}
+	// prepares an image by turning to greyscale, changing contrast, and trimming the picture.
 	public static Picture prepPicture(Picture pic){
 		pic.convertToGreyscale();
 		pic.absoluteGreyscaleContrast();
@@ -223,16 +250,23 @@ public class OCR implements Serializable {
 		pic.scalePicture(PIC_SIZE, PIC_SIZE);
 		return pic;
 	}
+	// grabs training letters as .jpg's, prepares them, then creates an ImageMap
 	public static TrainingLetters getTrainingLetters(TrainingLetters tl){
+		// points to directory containing training images
 		File dir = new File("../TrainingPictures");
+		// iterates over every file in directory
 		for (File child : dir.listFiles()) {
+			// gets the last 4 letters of every file
 			String type = child.getName().substring((int)child.getName().length() - 4, (int)child.getName().length());
-		  	String name = child.getName().substring(0, (int)child.getName().length() - 4);
-//		  	System.out.println(type);
+		  	// gets the file name without the last 4 letters.
+			String name = child.getName().substring(0, (int)child.getName().length() - 4);
 		  	ImageMap im;
+		  	// only applies to .jpg file types
 		  	if(type.equals(".jpg")){
+		  		// preps image.
 		  		Picture temp = prepPicture(new Picture(child.getPath()));
 		  		char underscore = '_';
+		  		// checks if file contains an uppercase or lowercase letter (uppercase begins with an underscore)
 		  		if(name.charAt(0) != underscore) {
 					im = createImageMap(temp, name.charAt(0));
 				} else {
@@ -244,12 +278,16 @@ public class OCR implements Serializable {
 		}
 		return tl;
 	}
+	// creates an ImageMap from a given picture
 	public static ImageMap createImageMap(Picture p, char c){
 		OCR me = new OCR();
+		// considering making ImageMap its own file to prevent having to do workarounds like this
 		ImageMap im = me.new ImageMap();
+		// iterates over every pixel in an image
 		for(int j = 0; j < p.getHeight(); j++){
 			for(int i = 0; i < p.getWidth(); i++){
 				Coords coords = new Coords(i,j);
+				// sets the corresponding point in ImageMap to the grey value of the pixel
 				im.setPoint(coords, p.getPixelGrey(coords));
 			}
 		}
@@ -267,6 +305,7 @@ public class OCR implements Serializable {
 		}
 		return im;
 	}
+	// gets the distance between two pictures
 	public static int euclideanPictureDistance(ImageMap im1, ImageMap im2){
 		int sumSqr = 0;
 		for(int j = 0; j < PIC_SIZE; j++){
@@ -276,6 +315,7 @@ public class OCR implements Serializable {
 		}
 		return (int)Math.sqrt(sumSqr);
 	}
+	// finds the TrainingLetter with the closest ImageMap to the given image
 	public static ImageMap closestMatch(ImageMap im, TrainingLetters tl){
 		//Find the smallest euclidean distance between source image and all training images
 		double lowest = Double.MAX_VALUE;
@@ -332,8 +372,6 @@ public class OCR implements Serializable {
 		ImageMap[] imArray = new ImageMap[0];
 		for (File child : dir.listFiles()) {
 			String type = child.getName().substring((int)child.getName().length() - 4, (int)child.getName().length());
-//		  	System.out.println(type);
-//		  	String num = child.getName().substring(1, 2);
 		  	if(type.equals(".ser")){
 		  		try {
 					ObjectInputStream ois = new ObjectInputStream(new FileInputStream(child));
