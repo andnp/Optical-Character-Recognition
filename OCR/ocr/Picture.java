@@ -1,4 +1,4 @@
-package edgedetection;
+package ocr;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -15,7 +15,7 @@ public class Picture {
 	Picture() {
 		try {
 			File file = new File(
-					"C://Users/Andy/workspace/ImageProcessing/src/edgedetection/BlackSquare.jpg");
+					"../edgedetection/toberead.jpg");
 			pic = ImageIO.read(file);
 		} catch (IOException e) {
 			e.printStackTrace();

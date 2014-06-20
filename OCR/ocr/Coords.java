@@ -1,4 +1,4 @@
-package edgedetection;
+package ocr;
 
 public class Coords{
 	private int[] coords = new int[2];

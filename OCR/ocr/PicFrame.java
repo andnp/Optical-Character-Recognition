@@ -1,4 +1,4 @@
-package edgedetection;
+package ocr;
 
 import javax.swing.*;
 

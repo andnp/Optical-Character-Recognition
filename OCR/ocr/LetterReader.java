@@ -1,11 +1,11 @@
-package edgedetection;
+package ocr;
 
 import java.io.*;
 /*
 
 */
-public class OCR implements Serializable {
-	static OCR me = new OCR();
+public class LetterReader implements Serializable {
+	static LetterReader me = new LetterReader();
 	private static final long serialVersionUID = 1L;
 	// size of read image in pixels
 	private static final int PIC_SIZE = 200;
@@ -214,7 +214,7 @@ public class OCR implements Serializable {
 	}
 	
 	public static void main(String[] args){
-		OCR me = new OCR();
+		LetterReader me = new LetterReader();
 		// This is the picture that is read in (for debugging only)
 		String tbrDir = new String("../edgedetection/toberead.jpg");
 		Picture pic = new Picture(tbrDir);
@@ -280,7 +280,7 @@ public class OCR implements Serializable {
 	}
 	// creates an ImageMap from a given picture
 	public static ImageMap createImageMap(Picture p, char c){
-		OCR me = new OCR();
+		LetterReader me = new LetterReader();
 		// considering making ImageMap its own file to prevent having to do workarounds like this
 		ImageMap im = me.new ImageMap();
 		// iterates over every pixel in an image
@@ -295,7 +295,7 @@ public class OCR implements Serializable {
 		return im;
 	}
 	public static ImageMap createImageMap(Picture p){
-		OCR me = new OCR();
+		LetterReader me = new LetterReader();
 		ImageMap im = me.new ImageMap();
 		for(int j = 0; j < p.getHeight(); j++){
 			for(int i = 0; i < p.getWidth(); i++){
