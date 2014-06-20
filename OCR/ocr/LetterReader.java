@@ -10,6 +10,9 @@ public class LetterReader implements Serializable {
 	// size of read image in pixels
 	private static final int PIC_SIZE = 200;
 	static LetterIterations li = me.new LetterIterations();
+	static char[] supportedCharacters = 
+		{'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+		 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
 	
 	/* 
 	 * A LetterIterations object keeps track of how many training letters
@@ -158,6 +161,14 @@ public class LetterReader implements Serializable {
 			newarray[newarray.length - 1] = im;		
 			this.mapArray = newarray;
 		}
+		// checks for missing characters based on list of supported characters. Returns char array of missing characters.
+		public char[] checkForMissingCharacters(){
+			char[] result = supportedCharacters.clone();
+			for(ImageMap working : mapArray){
+				result = remove(working.getChar(), result);
+			}
+			return result;
+		}
 	}
 	/* 
 	 * An ImageMap contains a PIC_SIZE x PIC_SIZE matrix containing grey values of an image
@@ -213,21 +224,19 @@ public class LetterReader implements Serializable {
 		}
 	}
 	
+	public static TrainingLetters initTrainingLetters(){
+		TrainingLetters tl = deSerialize();
+		char[] missing = tl.checkForMissingCharacters();
+		tl = getTrainingLetters(missing, tl);
+		return tl;
+	}
+	
 	public static void main(String[] args){
-		LetterReader me = new LetterReader();
 		// This is the picture that is read in (for debugging only)
-		String tbrDir = new String("../edgedetection/toberead.jpg");
+		String tbrDir = new String("../ocr/toberead.jpg");
 		Picture pic = new Picture(tbrDir);
 		
-		// create TrainingLetters
-		TrainingLetters tl = null;
-		// pull TrainingLetters from .ser files (if they exist)
-		tl = deSerialize();
-		// if .ser files do not exist or even one does not exist, recreate entire database
-		// need to fix so it only updates database, not recreate entire database
-		if(tl.mapArray.length <= 51){
-			tl = getTrainingLetters(me.new TrainingLetters());
-		}
+		TrainingLetters tl = initTrainingLetters();
 		
 		// trims, darkens, and turns to grey-scale the picture to be read
 		pic = prepPicture(pic);
@@ -244,6 +253,7 @@ public class LetterReader implements Serializable {
 	}
 	// prepares an image by turning to greyscale, changing contrast, and trimming the picture.
 	public static Picture prepPicture(Picture pic){
+		if(pic == null) System.out.println("null pic");
 		pic.convertToGreyscale();
 		pic.absoluteGreyscaleContrast();
 		pic.trimAspectSecure(.4);
@@ -251,7 +261,7 @@ public class LetterReader implements Serializable {
 		return pic;
 	}
 	// grabs training letters as .jpg's, prepares them, then creates an ImageMap
-	public static TrainingLetters getTrainingLetters(TrainingLetters tl){
+	public static TrainingLetters getTrainingLetters(char[] neededLetters, TrainingLetters tl){
 		// points to directory containing training images
 		File dir = new File("../TrainingPictures");
 		// iterates over every file in directory
@@ -263,24 +273,27 @@ public class LetterReader implements Serializable {
 		  	ImageMap im;
 		  	// only applies to .jpg file types
 		  	if(type.equals(".jpg")){
-		  		// preps image.
-		  		Picture temp = prepPicture(new Picture(child.getPath()));
 		  		char underscore = '_';
+		  		char fileChar;
 		  		// checks if file contains an uppercase or lowercase letter (uppercase begins with an underscore)
 		  		if(name.charAt(0) != underscore) {
-					im = createImageMap(temp, name.charAt(0));
+		  			fileChar = name.charAt(0);
 				} else {
-					im = createImageMap(temp, name.charAt(1));
+					fileChar = name.charAt(1);
 				}
-		  		tl.addImageMap(im);
-		  		System.out.println("File: " + name);
+		  		if(isInArray(fileChar, neededLetters) ){
+			  		// preps image.
+			  		Picture temp = prepPicture(new Picture(child.getPath()));
+			  		im = createImageMap(temp, fileChar);
+			  		tl.addImageMap(im);
+			  		System.out.println("File: " + name);
+		  		}
 		  	}
 		}
 		return tl;
 	}
 	// creates an ImageMap from a given picture
 	public static ImageMap createImageMap(Picture p, char c){
-		LetterReader me = new LetterReader();
 		// considering making ImageMap its own file to prevent having to do workarounds like this
 		ImageMap im = me.new ImageMap();
 		// iterates over every pixel in an image
@@ -295,7 +308,6 @@ public class LetterReader implements Serializable {
 		return im;
 	}
 	public static ImageMap createImageMap(Picture p){
-		LetterReader me = new LetterReader();
 		ImageMap im = me.new ImageMap();
 		for(int j = 0; j < p.getHeight(); j++){
 			for(int i = 0; i < p.getWidth(); i++){
@@ -398,6 +410,26 @@ public class LetterReader implements Serializable {
 		}
 		newarray[newarray.length - 1] = im;		
 		return newarray;
+	}
+	public static boolean isInArray(char c, char[] charArray){
+		for(char working : charArray){
+			if(working == c){
+				return true;
+			}
+		}
+		return false;
+	}
+	// returns a new array without given character.
+	public char[] remove(char c, char[] charArray){
+		char[] result = new char[charArray.length - 1];
+		int i = 0;
+		for(char working : charArray){
+			if(working != c){
+				result[i] = working;
+			}
+			i++;
+		}
+		return result;
 	}
 }
 
