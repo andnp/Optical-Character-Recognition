@@ -161,8 +161,8 @@ public class LetterReader implements Serializable {
 		// checks for missing characters based on list of supported characters. Returns char array of missing characters.
 		public char[] checkForMissingCharacters(){
 			char[] result = supportedCharacters.clone();
-			for(ImageMap working : mapArray){
-				result = remove(working.getChar(), result);
+			for(ImageMap imagemap : mapArray){
+				result = remove(imagemap.getChar(), result);
 			}
 			return result;
 		}
@@ -422,7 +422,7 @@ public class LetterReader implements Serializable {
 		int offSet = 0;
 		for(int i = 0; i < result.length; i++){
 			if(c != charArray[i]){
-				result[i - offSet] = c;
+				result[i - offSet] = charArray[i];
 			} else {
 				offSet += 1;
 			}
