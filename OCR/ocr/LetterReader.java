@@ -107,10 +107,7 @@ public class LetterReader implements Serializable {
 	 */
 	private class TrainingLetters{
 		ImageMap[] mapArray = {};
-		// no argument constructor
-		TrainingLetters(){
-			
-		}
+		
 		// creates an ImageMap array with the given ImageMap array.
 		TrainingLetters(ImageMap[] imArray){
 			mapArray = imArray;
@@ -422,13 +419,15 @@ public class LetterReader implements Serializable {
 	// returns a new array without given character.
 	public char[] remove(char c, char[] charArray){
 		char[] result = new char[charArray.length - 1];
-		int i = 0;
-		for(char working : charArray){
-			if(working != c){
-				result[i] = working;
+		int offSet = 0;
+		for(int i = 0; i < result.length; i++){
+			if(c != charArray[i]){
+				result[i - offSet] = c;
+			} else {
+				offSet += 1;
 			}
-			i++;
 		}
+		
 		return result;
 	}
 }
