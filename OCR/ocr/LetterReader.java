@@ -8,15 +8,19 @@ import java.util.concurrent.TimeUnit;
 
 */
 public class LetterReader implements Serializable {
-	static LetterReader me = new LetterReader();
+	private static LetterReader me = new LetterReader();
+	private static boolean initialized = false;
 	private static final long serialVersionUID = 1L;
 	// size of read image in pixels
 	private static final int PIC_SIZE = 200;
-	static LetterIterations li = me.new LetterIterations();
-	static TrainingLetters tl = me.new TrainingLetters();
+	private static LetterIterations li = me.new LetterIterations();
+	private static TrainingLetters tl = me.new TrainingLetters();
 	static char[] supportedCharacters = 
 		{'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
 		 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+	
+	public LetterReader(){
+	}
 	
 	/* 
 	 * A LetterIterations object keeps track of how many training letters
@@ -227,36 +231,39 @@ public class LetterReader implements Serializable {
 		}
 	}
 	
-	public static void initTrainingLetters(){
+	// Prepares the OCR object with a set of training files for comparison
+	public void initTrainingLetters(){
+		// pull previously existing training files
 		tl = deSerialize();
+		// creates an array of missing characters
 		char[] missing = tl.checkForMissingCharacters();
+		// new Thread pool
 		ExecutorService es = Executors.newCachedThreadPool();
 		for(char letter : missing){
-			//ReadTrainingFiles(letter);
+			// start reading letter on a new thread
 			es.execute(me.new ReadTrainingFile(letter));
-//			Thread runningThread = new Thread(me.new ReadTrainingFile(letter));
-//			runningThread.start();
-//			try {
-//				runningThread.join();
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
 		}
+		// shutdown all existing threads when they finish processing
 		es.shutdown();
+		// block main thread until all ReadTrainingFile threads finish (or 60 minutes whichever is first)
 		try {
 			es.awaitTermination(60, TimeUnit.MINUTES);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		initialized = true;
 	}
 	
-	public static void main(String[] args){
-		// This is the picture that is read in (for debugging only)
-		String tbrDir = new String("../ocr/toberead.jpg");
-		Picture pic = new Picture(tbrDir);
-		
-		initTrainingLetters();
-		
+	// Safely shuts down the reader by saving TL files as .ser
+	public void shutdownLetterReader(){
+		serializeTLMaps();
+	}
+	
+	// Takes a Picture with a single letter and returns the guessed character
+	public char read(Picture pic){
+		if(!initialized){
+			initTrainingLetters();
+		}
 		// trims, darkens, and turns to grey-scale the picture to be read
 		pic = prepPicture(pic);
 		// show picture to be read in a new window (debugging purposes only)
@@ -264,14 +271,11 @@ public class LetterReader implements Serializable {
 		f.buildFrame();
 		// find the closest match to the picture to be read
 		ImageMap result = closestMatch(createImageMap(pic));
-		// create new serial files 
-		serializeTLMaps();
-		// print some info to console
-		System.out.println("Total trainers: " + li.getIteration('z'));
-		System.out.println("Guess:" +result.getChar());
+		return result.getChar();
 	}
+	
 	// prepares an image by turning to greyscale, changing contrast, and trimming the picture.
-	public static Picture prepPicture(Picture pic){
+	private static Picture prepPicture(Picture pic){
 		if(pic == null) System.out.println("null pic");
 		pic.convertToGreyscale();
 		pic.absoluteGreyscaleContrast();
@@ -323,7 +327,7 @@ public class LetterReader implements Serializable {
 	
 	
 	// creates an ImageMap from a given picture
-	public static ImageMap createImageMap(Picture p, char c){
+	private static ImageMap createImageMap(Picture p, char c){
 		// considering making ImageMap its own file to prevent having to do workarounds like this
 		ImageMap im = me.new ImageMap();
 		// iterates over every pixel in an image
@@ -337,7 +341,7 @@ public class LetterReader implements Serializable {
 		im.setChar(c);
 		return im;
 	}
-	public static ImageMap createImageMap(Picture p){
+	private static ImageMap createImageMap(Picture p){
 		ImageMap im = me.new ImageMap();
 		for(int j = 0; j < p.getHeight(); j++){
 			for(int i = 0; i < p.getWidth(); i++){
@@ -348,7 +352,7 @@ public class LetterReader implements Serializable {
 		return im;
 	}
 	// gets the distance between two pictures
-	public static int euclideanPictureDistance(ImageMap im1, ImageMap im2){
+	private static int euclideanPictureDistance(ImageMap im1, ImageMap im2){
 		int sumSqr = 0;
 		for(int j = 0; j < PIC_SIZE; j++){
 			for(int i = 0; i < PIC_SIZE; i++){
@@ -358,7 +362,7 @@ public class LetterReader implements Serializable {
 		return (int)Math.sqrt(sumSqr);
 	}
 	// finds the TrainingLetter with the closest ImageMap to the given image
-	public static ImageMap closestMatch(ImageMap im){
+	private static ImageMap closestMatch(ImageMap im){
 		//Find the smallest euclidean distance between source image and all training images
 		double lowest = Double.MAX_VALUE;
 		double[] arr = new double[tl.mapArray.length];
@@ -386,7 +390,7 @@ public class LetterReader implements Serializable {
 		}
 		return tl.getImageMap(index);
 	}
-	public static void serializeTLMaps(){
+	private static void serializeTLMaps(){
 		// sends the final map to a serial file to be stored for later use
 		// this way the program does not need to recompile library for every use
 		try{
@@ -409,7 +413,7 @@ public class LetterReader implements Serializable {
 			e.printStackTrace();
 		}
 	}
-	public static TrainingLetters deSerialize(){
+	private static TrainingLetters deSerialize(){
 		File dir = new File("../SerialFiles");
 		ImageMap[] imArray = new ImageMap[0];
 		for (File child : dir.listFiles()) {
@@ -433,7 +437,7 @@ public class LetterReader implements Serializable {
 		}
 		return me.new TrainingLetters(imArray);
 	}
-	public static ImageMap[] Push(ImageMap im, ImageMap[] array){
+	private static ImageMap[] Push(ImageMap im, ImageMap[] array){
 		ImageMap[] newarray = new ImageMap[array.length + 1];
 		for(int i = 0; i < array.length; i++){
 			newarray[i] = array[i];
@@ -441,16 +445,8 @@ public class LetterReader implements Serializable {
 		newarray[newarray.length - 1] = im;		
 		return newarray;
 	}
-	public static boolean isInArray(char c, char[] charArray){
-		for(char working : charArray){
-			if(working == c){
-				return true;
-			}
-		}
-		return false;
-	}
 	// returns a new array without given character.
-	public char[] remove(char c, char[] charArray){
+	private char[] remove(char c, char[] charArray){
 		char[] result = new char[charArray.length - 1];
 		int offSet = 0;
 		for(int i = 0; i < result.length; i++){
