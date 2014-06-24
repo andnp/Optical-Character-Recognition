@@ -1,6 +1,9 @@
 package ocr;
 
 import java.io.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 /*
 
 */
@@ -227,7 +230,24 @@ public class LetterReader implements Serializable {
 	public static void initTrainingLetters(){
 		tl = deSerialize();
 		char[] missing = tl.checkForMissingCharacters();
-		tl = getTrainingLetters(missing, tl);
+		ExecutorService es = Executors.newCachedThreadPool();
+		for(char letter : missing){
+			//ReadTrainingFiles(letter);
+			es.execute(me.new ReadTrainingFile(letter));
+//			Thread runningThread = new Thread(me.new ReadTrainingFile(letter));
+//			runningThread.start();
+//			try {
+//				runningThread.join();
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+		}
+		es.shutdown();
+		try {
+			es.awaitTermination(60, TimeUnit.MINUTES);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static void main(String[] args){
@@ -259,38 +279,49 @@ public class LetterReader implements Serializable {
 		pic.scalePicture(PIC_SIZE, PIC_SIZE);
 		return pic;
 	}
-	// grabs training letters as .jpg's, prepares them, then creates an ImageMap
-	public static TrainingLetters getTrainingLetters(char[] neededLetters, TrainingLetters tl){
-		// points to directory containing training images
-		File dir = new File("../TrainingPictures");
-		// iterates over every file in directory
-		for (File child : dir.listFiles()) {
-			// gets the last 4 letters of every file
-			String type = child.getName().substring((int)child.getName().length() - 4, (int)child.getName().length());
-		  	// gets the file name without the last 4 letters.
-			String name = child.getName().substring(0, (int)child.getName().length() - 4);
-		  	ImageMap im;
-		  	// only applies to .jpg file types
-		  	if(type.equals(".jpg")){
-		  		char underscore = '_';
-		  		char fileChar;
-		  		// checks if file contains an uppercase or lowercase letter (uppercase begins with an underscore)
-		  		if(name.charAt(0) != underscore) {
-		  			fileChar = name.charAt(0);
-				} else {
-					fileChar = name.charAt(1);
-				}
-		  		if(isInArray(fileChar, neededLetters) ){
-			  		// preps image.
-			  		Picture temp = prepPicture(new Picture(child.getPath()));
-			  		im = createImageMap(temp, fileChar);
-			  		tl.addImageMap(im);
-			  		System.out.println("File: " + name);
-		  		}
-		  	}
+	
+	private class ReadTrainingFile implements Runnable{
+		private char c;
+		public ReadTrainingFile(char c){
+			this.c = c;
 		}
-		return tl;
+		public void run(){
+			this.getTrainingLetter(c);
+		}
+		// grabs training letters as .jpg's, prepares them, then creates an ImageMap
+		public void getTrainingLetter(char letter){
+			// points to directory containing training images
+			File dir = new File("../TrainingPictures");
+			// iterates over every file in directory
+			for (File child : dir.listFiles()) {
+				// gets the last 4 letters of every file
+				String type = child.getName().substring((int)child.getName().length() - 4, (int)child.getName().length());
+			  	// gets the file name without the last 4 letters.
+				String name = child.getName().substring(0, (int)child.getName().length() - 4);
+			  	ImageMap im;
+			  	// only applies to .jpg file types
+			  	if(type.equals(".jpg")){
+			  		char underscore = '_';
+			  		char fileChar;
+			  		// checks if file contains an uppercase or lowercase letter (uppercase begins with an underscore)
+			  		if(name.charAt(0) != underscore) {
+			  			fileChar = name.charAt(0);
+					} else {
+						fileChar = name.charAt(1);
+					}
+			  		if(fileChar == letter){
+				  		// preps image.
+				  		Picture temp = prepPicture(new Picture(child.getPath()));
+				  		im = createImageMap(temp, fileChar);
+				  		tl.addImageMap(im);
+				  		System.out.println("File: " + name);
+			  		}
+			  	}
+			}
+		}
 	}
+	
+	
 	// creates an ImageMap from a given picture
 	public static ImageMap createImageMap(Picture p, char c){
 		// considering making ImageMap its own file to prevent having to do workarounds like this
