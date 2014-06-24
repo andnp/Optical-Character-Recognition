@@ -10,6 +10,7 @@ public class LetterReader implements Serializable {
 	// size of read image in pixels
 	private static final int PIC_SIZE = 200;
 	static LetterIterations li = me.new LetterIterations();
+	static TrainingLetters tl = me.new TrainingLetters();
 	static char[] supportedCharacters = 
 		{'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
 		 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
@@ -108,6 +109,8 @@ public class LetterReader implements Serializable {
 	private class TrainingLetters{
 		ImageMap[] mapArray = {};
 		
+		TrainingLetters(){
+		}
 		// creates an ImageMap array with the given ImageMap array.
 		TrainingLetters(ImageMap[] imArray){
 			mapArray = imArray;
@@ -221,11 +224,10 @@ public class LetterReader implements Serializable {
 		}
 	}
 	
-	public static TrainingLetters initTrainingLetters(){
-		TrainingLetters tl = deSerialize();
+	public static void initTrainingLetters(){
+		tl = deSerialize();
 		char[] missing = tl.checkForMissingCharacters();
 		tl = getTrainingLetters(missing, tl);
-		return tl;
 	}
 	
 	public static void main(String[] args){
@@ -233,7 +235,7 @@ public class LetterReader implements Serializable {
 		String tbrDir = new String("../ocr/toberead.jpg");
 		Picture pic = new Picture(tbrDir);
 		
-		TrainingLetters tl = initTrainingLetters();
+		initTrainingLetters();
 		
 		// trims, darkens, and turns to grey-scale the picture to be read
 		pic = prepPicture(pic);
@@ -241,9 +243,9 @@ public class LetterReader implements Serializable {
 		PicFrame f = new PicFrame(pic);
 		f.buildFrame();
 		// find the closest match to the picture to be read
-		ImageMap result = closestMatch(createImageMap(pic), tl);
+		ImageMap result = closestMatch(createImageMap(pic));
 		// create new serial files 
-		serializeTLMaps(tl);
+		serializeTLMaps();
 		// print some info to console
 		System.out.println("Total trainers: " + li.getIteration('z'));
 		System.out.println("Guess:" +result.getChar());
@@ -325,7 +327,7 @@ public class LetterReader implements Serializable {
 		return (int)Math.sqrt(sumSqr);
 	}
 	// finds the TrainingLetter with the closest ImageMap to the given image
-	public static ImageMap closestMatch(ImageMap im, TrainingLetters tl){
+	public static ImageMap closestMatch(ImageMap im){
 		//Find the smallest euclidean distance between source image and all training images
 		double lowest = Double.MAX_VALUE;
 		double[] arr = new double[tl.mapArray.length];
@@ -353,7 +355,7 @@ public class LetterReader implements Serializable {
 		}
 		return tl.getImageMap(index);
 	}
-	public static void serializeTLMaps(TrainingLetters tl){
+	public static void serializeTLMaps(){
 		// sends the final map to a serial file to be stored for later use
 		// this way the program does not need to recompile library for every use
 		try{
