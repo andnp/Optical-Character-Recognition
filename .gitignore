@@ -5,6 +5,7 @@
 .classpath
 .project
 .settings/
+.jpeg
 
 # Windows image file caches
 Thumbs.db
