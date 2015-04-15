@@ -35,63 +35,13 @@ public class LetterReader implements Serializable {
 		// returns the position in the iteration vector, given a letter.
 		public int getPosition(char c){
 			int ret = 0;
-			switch(c) {
-			case 'a': ret = 0; break;
-			case 'b': ret = 1; break;
-			case 'c': ret = 2; break;
-			case 'd': ret = 3; break;
-			case 'e': ret = 4; break;
-			case 'f': ret = 5; break;
-			case 'g': ret = 6; break;
-			case 'h': ret = 7; break;
-			case 'i': ret = 8; break;
-			case 'j': ret = 9; break;
-			case 'k': ret = 10; break;
-			case 'l': ret = 11; break;
-			case 'm': ret = 12; break;
-			case 'n': ret = 13; break;
-			case 'o': ret = 14; break;
-			case 'p': ret = 15; break;
-			case 'q': ret = 16; break;
-			case 'r': ret = 17; break;
-			case 's': ret = 18; break;
-			case 't': ret = 19; break;
-			case 'u': ret = 20; break;
-			case 'v': ret = 21; break;
-			case 'w': ret = 22; break;
-			case 'x': ret = 23; break;
-			case 'y': ret = 24; break;
-			case 'z': ret = 25; break;
-			
-			case 'A': ret = 26; break;
-			case 'B': ret = 27; break;
-			case 'C': ret = 28; break;
-			case 'D': ret = 29; break;
-			case 'E': ret = 30; break;
-			case 'F': ret = 31; break;
-			case 'G': ret = 32; break;
-			case 'H': ret = 33; break;
-			case 'I': ret = 34; break;
-			case 'J': ret = 35; break;
-			case 'K': ret = 36; break;
-			case 'L': ret = 37; break;
-			case 'M': ret = 38; break;
-			case 'N': ret = 39; break;
-			case 'O': ret = 40; break;
-			case 'P': ret = 41; break;
-			case 'Q': ret = 42; break;
-			case 'R': ret = 43; break;
-			case 'S': ret = 44; break;
-			case 'T': ret = 45; break;
-			case 'U': ret = 46; break;
-			case 'V': ret = 47; break;
-			case 'W': ret = 48; break;
-			case 'X': ret = 49; break;
-			case 'Y': ret = 50; break;
-			case 'Z': ret = 51; break;
+			for(char working : supportedCharacters){
+				if(working == c){
+					return ret;
+				}
+				ret++;
 			}
-			
-			return ret;
+			return -1;
 		}
 		// returns the number of iterations have passed for given letter.
 		public int getIteration(char c){
